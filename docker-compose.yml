@@ -1,0 +1,94 @@
+version: "3.1"
+services:
+  #openjdk:
+  #  image: openjdk:17
+  #  tty: true
+  #  stdin_open: true
+  #  container_name: yu-openjdk
+  #  working_dir: /application
+  #  volumes:
+  #    - ../../:/application
+  #  ports:
+  #    - "8080:8080"
+  #phpmyadmin:
+  #  image: phpmyadmin:latest
+  #  container_name: yu-phpmyadmin
+  #  ports:
+  #    - "3000:80"
+  #  environment:
+  #    - PMA_ARBITRARY=1
+  #    - PMA_HOST=mysql
+  #    - PMA_PORT=3306
+  #    - PMA_USER=root
+  #    - PMA_PASSWORD=123456
+  #center:
+  #  build: centos
+  #  container_name: yu-centos
+  #  privileged: true
+  #  tty: true
+  #  stdin_open: true
+  #redislabs:
+  #  image: redislabs/redisinsight:latest
+  #  container_name: yu-redislabs
+  #  ports:
+  #    - "5000:8001"
+  redis:
+    image: redis:alpine
+    container_name: yu-redis
+    volumes:
+      - ./redis/data/:/data/
+      - ./redis/conf/redis.conf:/etc/redis/redis.conf
+    command: ["redis-server","/etc/redis/redis.conf"]
+    ports:
+      - "6379:6379"
+  mysql:
+    image: mysql:5.7
+    container_name: yu-mysql
+    volumes:
+      - ./mysql/conf.d/:/etc/mysql/conf.d/
+      - ./mysql/mysql/:/var/lib/mysql/
+      - ./mysql/mysql-files/:/var/lib/mysql-files/
+    privileged: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    ports:
+      - "3311:3306"
+  nginx:
+    image: nginx:latest
+    container_name: yu-nginx
+    working_dir: /application
+    volumes:
+      - ./nginx/cert/:/etc/nginx/conf.d/cert/
+      - ../../:/application
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    #depends_on:
+    # - php7.2-fpm
+    ports:
+      - "443:443"
+      - "80:80"
+      - "88:88"
+  php7.2-fpm:
+    container_name: yu-php7.2-fpm
+    build:
+      context: php
+      args:
+        - PHP_VERSION=7.2
+        - SWOOLE=4.8.13
+        - XDEBUG=3.1.6
+        #- PHP_VERSION=8.2
+        #- SWOOLE=5.0.3
+        #- XDEBUG=3.2.1
+        - REDIS=5.3.7
+        - IMAGICK=3.7.0
+        - COMPOSER=2.5.8
+    working_dir: /application
+    privileged: true
+    tty: true
+    volumes:
+      - ../../:/application
+      - ./php/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./php/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
+    ports:
+      - "7072:80"
+    # - "7082:80"
+
